@@ -8,47 +8,24 @@ import { kml } from '@tmcw/togeojson';
 import RNFS from 'react-native-fs';
 import { GeometryObject } from 'geojson';
 import closestPointOnPolygon from './calculate/FindPath'
+//needed for google maps
 enableLatestRenderer();
 
-
-
+//LatLng type declaration
 type LatLng = {
     latitude: number,
     longitude: number,
 }
 
-//converting to LetLng array
+//converting from 2 demncinal array to LetLng array type 
 const convert = (numbersArray: any[]): Array<LatLng> => {
     let arr: any = [];
     console.log(numbersArray.length);
     for (let i = 0; i < numbersArray.length; i++) {
         arr.push({ latitude: numbersArray[i][1], longitude: numbersArray[i][0] })
     }
-
     return arr;
 }
-const checkInside = (point: number[] | undefined, polyArray: number[][] | undefined) => {
-    console.log(point);
-    console.log(polyArray);
-    // ray-casting algorithm based on
-    // https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html/pnpoly.html
-    if (point === undefined || polyArray === undefined) {
-        console.log(`some thing is undfiend point state : ${point} poleArr state : ${polyArray}`)
-        return;
-    } else {
-        let x = point[0], y = point[1];
-        let inside = false;
-        for (let i = 0, j = polyArray.length - 1; i < polyArray.length; j = i++) {
-            let xi = polyArray[i][0], yi = polyArray[i][1];
-            let xj = polyArray[j][0], yj = polyArray[j][1];
-
-            let intersect = ((yi > y) != (yj > y))
-                && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-            if (intersect) inside = !inside;
-        }
-        return inside;
-    }
-};
 
 
 const App = () => {
@@ -67,8 +44,32 @@ const App = () => {
         setInside(checkInside(userPoint, pointsArry));
     }, [userPoint])
 
+    //check if the phone insed the polygon
+    const checkInside = (point: number[] | undefined, polyArray: number[][] | undefined) => {
+        // ray-casting algorithm based on
+        //check if we missing user location or polygon
+        if (point === undefined || polyArray === undefined) {
+            console.log(`some thing is undfiend point state : ${point} poleArr state : ${polyArray}`)
+            return;
+        } else {
+            let x = point[0], y = point[1];
+            setInside(false);
+            //will take 2 points at a time 
+            for (let A = 0, B = polyArray.length - 1; A < polyArray.length; B = A++) {
+                let Ax = polyArray[A][0], Ay = polyArray[A][1];
+                let Bx = polyArray[B][0], By = polyArray[B][1];
+                // ((Ay > y) != (By > y)) if they both biger or lesser than user y that he is out side
+                //
+                let intersect = ((Ay > y) != (By > y)) && (x < (Bx - Ax) * (y - Ay) / (By - Ay) + Ax);
 
+                if (intersect) setInside(!inside);
+            }
+            return inside;
+        }
+    };
+    //find the fater path to the poligon and the nearest point uses method from FindPath.js file
     const findPath = () => {
+        //if user inside will abord calculation
         if (inside === true) {
             console.log("abored path calculation user is in the poligon")
         } else {
@@ -78,15 +79,12 @@ const App = () => {
                 console.log(pointsArry);
                 let temp: any[];
                 temp = closestPointOnPolygon(userPoint, pointsArry)
-                console.log(temp);
-                console.log(userPoint);
-                console.log(closestPointOnPolygon(userPoint, pointsArry))
                 setNearestPoint([temp[0][0], temp[0][1]]);
                 setShortestWay(temp[1])
             }
         }
     }
-
+    //read a file from the phone
     const readFile = async (MyPath: any) => {
         try {
             const path = MyPath;
@@ -96,7 +94,7 @@ const App = () => {
             console.log(e);
         }
     }
-
+    //read the kml and convertse it to GeoJson after that converts to LatLng 
     const FileSelect = async () => {
         console.log("good")
         try {
@@ -114,10 +112,11 @@ const App = () => {
                 const converted = kml(theKml);
                 if (converted != null) {
                     //ts can be null work aruond
-                    const a: any = converted;
-                    setKmlFile(convert(a.features[0].geometry.coordinates[0]));
-                    setPointsArray(a.features[0].geometry.coordinates[0]);
-                    setInside(checkInside(userPoint, a.features[0].geometry.coordinates[0]));
+                    const workAroundVar: any = converted;
+                    setKmlFile(convert(workAroundVar.features[0].geometry.coordinates[0]));
+                    setPointsArray(workAroundVar.features[0].geometry.coordinates[0]);
+                    //checks if the user inside the polygon
+                    setInside(checkInside(userPoint, workAroundVar.features[0].geometry.coordinates[0]));
                 } else {
                     console.error("kml null");
                 }
@@ -133,7 +132,7 @@ const App = () => {
             }
         }
     }
-    const log = () => console.log(kmlFile)
+    //main commponent
     return (
         <View style={styles.container}>
             <Map coordinatesArray={kmlFile} call={callback} />

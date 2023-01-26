@@ -1,3 +1,6 @@
+
+//the formula taken from the web needed to colculate the distance betwen to geo dots on the map
+//we return it in KM
 const Mlen = (point1 , point2) => {
     const R = 6371e3; // metres
     const φ1 = point1[1] * Math.PI/180; // φ, λ in radians
@@ -10,35 +13,45 @@ const Mlen = (point1 , point2) => {
     return d/1000; // in KM
 }
 
+//returns a len betwen 2 dots
 const vlen = (vector) => {
     return Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
 }
 
+//returns the neg(mirrored) vector
 const vnegate = (v) => {
     return [-v[0], -v[1]];
 }
 
+//sum to vetctors
 const vadd = (v1, v2) => {
     return [v1[0] + v2[0], v1[1] + v2[1]];
 }
-
+//sub to vetctors
 const vsub = (v1, v2) => {
     return [v1[0] - v2[0], v1[1] - v2[1]];
 }
 
+//scale a vector
 const vscale = (vector, factor) => {
     return [vector[0] * factor, vector[1] * factor];
 }
 
+//returns a norm of a vector
 const vnorm = (v) => {
     return [-v[1], v[0]];
 }
+
+//we draw a normal from our user to a vector we build , from poin a to b when they meet we mesure this normal
+//we go like this with all the points we got on our polygon , we save the shortest distance and send it back 
+// note :this way is not the best but was the fastes i could implement
+// note2: re wright this section so it will fit all the possibal situations 
 const closestPointOnPolygon = (point, poly) => {
     let shortestDist = Number.MAX_VALUE;
     let closestPointOnPoly = poly[0];
 
     poly.forEach( (point1, i) => {
-        let prev = (i === 0 ? poly.length-1 : i) - 1;
+        let prev = (i === 0 ? poly.length : i) - 1;
         let point2 = poly[prev];
         let line = vsub(point2, point1);
 

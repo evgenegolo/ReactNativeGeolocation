@@ -9,7 +9,8 @@ const KML_FILE = "./Bad_sample.kml"
 
 
 const Map = (_props: any) => {
-    //
+    // dump geo postion object data
+    //used if so the app wont crush when we have no geo data from the phone
     const dump: Geolocation.GeoPosition = {
         coords: {
             accuracy: 0,
@@ -24,11 +25,14 @@ const Map = (_props: any) => {
         provider: "fused",
         timestamp: 0
     };
+
+    //use state declarations
     const [time, setTime] = useState(Date.now());
     const [isLocation, setIsLocation] = useState(false);
     const [location, setLocation] = useState(dump);
     const [coordinates, setCordinates] = useState(_props.coordinatesArray);
 
+    //requests to use geo location
     const requestLocationPermission = async () => {
         try {
             const granted = await PermissionsAndroid.request(
@@ -54,6 +58,8 @@ const Map = (_props: any) => {
         }
     };
 
+    //get user geo position refresh it self evrey second
+    //pass the positin to perent commponent
     useEffect(() => {
         const interval = setInterval(() => setTime(Date.now()), 1000);
         const result = requestLocationPermission();
@@ -78,8 +84,9 @@ const Map = (_props: any) => {
             }
 
         });
-    }, [time]);
+    }, []);
 
+    //refresh the commponent and set new polygon array evrey time it changes in perrent component 
     useEffect(() => {
         console.log('useEffect logic ran');
         setCordinates(_props.coordinatesArray);
@@ -99,8 +106,8 @@ const Map = (_props: any) => {
             }}
         >
             <Polygon
-                coordinates={coordinates}
-                fillColor="#66666"
+                coordinates={coordinates} //geo position array
+                fillColor="#00000"
             />
         </MapView>
     );
